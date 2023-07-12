@@ -1,68 +1,55 @@
-import { Box, Button, FormControl, Grid, Paper, TextField, Typography } from "@mui/material";
-import { Link, useParams } from "react-router-dom";
-import { useAppSelector } from "../../app/hooks";
-import { selectCategoryById } from "./categorySlice";
-import { useState } from "react";
+import { Box, Paper, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { selectCategoryById, updateCategory } from "./categorySlice";
+import { CategoryForm } from "./components/CategoryForm";
+import { useSnackbar } from "notistack";
 
 export const CategoryEdit = () => {
     const id = useParams().id || "";
+    const [isLoadind, setIsLoading] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
     const category = useAppSelector((state) => selectCategoryById(state, id));
+    const [categoryState, setCategoryState] = useState(category);
+    const dispatch = useAppDispatch();
+    const { enqueueSnackbar } = useSnackbar();
 
-    const handleChange = (e: any) => { }
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        dispatch(updateCategory(categoryState))
+        enqueueSnackbar("Category updated successfully!", { variant: "success" });
+    }
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setCategoryState({ ...category, [name]: value });
+    };
+
+    const handleToggle = (e: any) => {
+        const { name, checked } = e.target;
+        setCategoryState({ ...category, [name]: checked });
+    }
 
     return (
         <Box>
             <Paper>
                 <Box p={2}>
                     <Box mb={2}>
-                        <Typography variant="h1">
+                        <Typography variant="h3">
                             Category Edit Page
                         </Typography>
                     </Box>
                 </Box>
 
-                <Box p={2}>
-                    <form>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth>
-                                    <TextField
-                                        required
-                                        name="name"
-                                        label="Name"
-                                        value={category.name}
-                                        disabled={isDisabled}
-                                        onChange={handleChange}
-                                    ></TextField>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth>
-                                    <TextField
-                                        required
-                                        name="description"
-                                        label="Description"
-                                        value={category.description}
-                                        disabled={isDisabled}
-                                        onChange={handleChange}
-                                    ></TextField>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Box display="flex" gap={2}>
-                                    <Button variant="contained" compoment={Link} to="/category">
-                                        Back
-                                    </Button>
-                                    <Button variant="contained" color="secondary" type="submit" disabled={isLoadind || isDisabled}>
-
-                                    </Button>
-
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    </form>
-                </Box>
+                <CategoryForm
+                    category={categoryState}
+                    isLoadind={isLoadind}
+                    isDisabled={isDisabled}
+                    handleSubmit={handleSubmit}
+                    handleChange={handleChange}
+                    handleToggle={handleToggle}
+                />
             </Paper>
         </Box>
     );
